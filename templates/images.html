@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Galleries</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth.js"></script>
+    <script>
+        const firebaseConfig = {
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById("status").innerText = `Logged in as ${user.email}`;
+                fetchGalleries();
+            } else {
+                window.location.href = "/";
+            }
+        });
+
+        function fetchGalleries() {
+            fetch('/galleries', {
+                headers: {
+                    "Authorization": `Bearer ${document.cookie.split('=')[1]}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const ownedGrid = document.getElementById("owned-galleries");
+                const sharedGrid = document.getElementById("shared-galleries");
+                ownedGrid.innerHTML = "";
+                sharedGrid.innerHTML = "";
+                
+                data.owned_galleries.forEach(gallery => {
+                    const galleryItem = document.createElement("div");
+                    galleryItem.className = "gallery-item";
+                    galleryItem.innerHTML = `
+                        <a href="/galleries/${gallery.id}">
+                            <div class="thumbnail">
+                                <img src="${gallery.thumbnail_url || '/static/default-thumbnail.jpg'}" alt="${gallery.name}">
+                            </div>
+                            <p>${gallery.name}</p>
+                        </a>
+                    `;
+                    ownedGrid.appendChild(galleryItem);
+                });
+
+                data.shared_galleries.forEach(gallery => {
+                    const galleryItem = document.createElement("div");
+                    galleryItem.className = "gallery-item";
+                    galleryItem.innerHTML = `
+                        <a href="/galleries/${gallery.id}">
+                            <div class="thumbnail">
+                                <img src="${gallery.thumbnail_url || '/static/default-thumbnail.jpg'}" alt="${gallery.name}">
+                            </div>
+                            <p>${gallery.name}</p>
+                        </a>
+                    `;
+                    sharedGrid.appendChild(galleryItem);
+                });
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>My Galleries</h1>
+    <div id="status">Checking login details</div>
+    <a href="/create_gallery" class="button">Create New Gallery</a>
+    <h2>Owned Galleries</h2>
+    <div id="owned-galleries" class="gallery-grid"></div>
+    <h2>Shared Galleries</h2>
+    <div id="shared-galleries" class="gallery-grid"></div>
+</body>
+</html>
