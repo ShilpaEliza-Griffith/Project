@@ -25,6 +25,14 @@
         <input type="file" id="image-file" accept=".jpg,.jpeg,.png" required>
         <button type="submit">Upload</button>
     </form>
+
+    <h2>Share Gallery</h2>
+    <form id="share-gallery-form" onsubmit="shareGallery(event)">
+        <input type="hidden" id="gallery-id" value="{{ gallery_id }}">
+        <label for="share-email">Share with (email):</label>
+        <input type="email" id="share-email" required>
+        <button type="submit">Share</button>
+    </form>
     
     <div id="image-grid" class="gallery-grid">
         <!-- Images will be loaded here dynamically -->

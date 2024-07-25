@@ -87,3 +87,37 @@ async def share_gallery(request: Request, gallery_id: str, email: str = Form(...
     db.collection('users').document(recipient_id).collection('shared_galleries').document(gallery_id).set(gallery_data)
 
     return {"detail": "Gallery shared successfully"}
+
+def compute_md5(file: UploadFile) -> str:
+    """Compute MD5 hash of a file."""
+    hash_md5 = hashlib.md5()
+    with io.BytesIO(file.file.read()) as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+@app.post("/upload_image/")
+async def upload_image(request: Request, file: UploadFile = File(...)):
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse(content="Unauthorized", status_code=401)
+
+    data = await request.form()
+    gallery_id = data.get("gallery_id")
+    if not gallery_id:
+        return HTMLResponse(content="Gallery ID is required", status_code=400)
+
+    # Compute MD5 hash
+    file_hash = compute_md5(file)
+
+    gallery_img = db.collection("galleries").document(gallery_id)
+    images_gall = gallery_img.collection("images")
+    docs = images_gall.where("hash", "==", file_hash).stream()
+
+    for doc in docs:
+        return HTMLResponse(content="Duplicate image detected", status_code=400)
+
+    images_gall.add({
+        "hash": file_hash,
+        "uploaded_at": firestore.SERVER_TIMESTAMP
+    })
