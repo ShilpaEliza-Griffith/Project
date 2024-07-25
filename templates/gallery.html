@@ -10,6 +10,22 @@
         <input type="file" id="image-file" accept=".jpg,.jpeg,.png" required>
         <button type="submit">Upload</button>
     </form>
+
+    <h2>Create New Gallery</h2>
+    <form id="create-gallery-form" onsubmit="createGallery(event)">
+        <label for="new-gallery-name">Gallery Name:</label>
+        <input type="text" id="new-gallery-name" required>
+        <button type="submit">Create Gallery</button>
+    </form>
+
+    <h2>Upload New Image</h2>
+    <form id="upload-form" onsubmit="uploadImage(event)">
+        <input type="hidden" id="gallery-id" value="{{ gallery_id }}">
+        <label for="image-file">Upload Image (JPG or PNG only):</label>
+        <input type="file" id="image-file" accept=".jpg,.jpeg,.png" required>
+        <button type="submit">Upload</button>
+    </form>
+    
     <div id="image-grid" class="gallery-grid">
         <!-- Images will be loaded here dynamically -->
     </div>
