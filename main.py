@@ -47,3 +47,22 @@ async def create_gallery(request: Request, name: str = Form(...)):
     
     return {"id": new_gallery[1].id}
 
+@app.get("/galleries/")
+async def galleries_list(request: Request):
+    user_info = verify_user(request)
+    user_id = user_info['uid']
+    
+    owned_galleries = db.collection('galleries').where('user_id', '==', user_id).stream()
+    shared_galleries = db.collection('users').document(user_id).collection('shared_galleries').stream()
+
+    owned_list = [{"id": gallery.id, **gallery.to_dict()} for gallery in owned_galleries]
+    shared_list = [{"id": gallery.id, **gallery.to_dict()} for gallery in shared_galleries]
+    
+    return {"owned_galleries": owned_list, "shared_galleries": shared_list}
+
+@app.get("/galleries/{gallery_id}/images/")
+async def get_images(request: Request, gallery_id: str):
+    verify_user(request)
+    
+    images = db.collection('images').where('gallery_id', '==', gallery_id).stream()
+    return [image.to_dict() for image in images]
