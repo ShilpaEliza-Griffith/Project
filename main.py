@@ -96,6 +96,12 @@ def compute_md5(file: UploadFile) -> str:
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
+async def duplicate_image_gallery(file_hash: str) -> bool:
+    """Check if the image hash is a duplicate across all galleries."""
+    all_images_ref = db.collection("images")
+    docs = all_images_ref.where("hash", "==", file_hash).stream()
+    return any(docs)
+
 @app.post("/upload_image/")
 async def upload_image(request: Request, file: UploadFile = File(...)):
     user_id = request.cookies.get("user_id")
@@ -109,6 +115,10 @@ async def upload_image(request: Request, file: UploadFile = File(...)):
 
     # Compute MD5 hash
     file_hash = compute_md5(file)
+
+    if await duplicate_image_gallery(file_hash):
+        return HTMLResponse(content="Duplicate image detected across galleries", status_code=400)
+
 
     gallery_img = db.collection("galleries").document(gallery_id)
     images_gall = gallery_img.collection("images")
