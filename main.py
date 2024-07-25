@@ -61,8 +61,29 @@ async def galleries_list(request: Request):
     return {"owned_galleries": owned_list, "shared_galleries": shared_list}
 
 @app.get("/galleries/{gallery_id}/images/")
-async def get_images(request: Request, gallery_id: str):
+async def retrieve_images(request: Request, gallery_id: str):
     verify_user(request)
     
     images = db.collection('images').where('gallery_id', '==', gallery_id).stream()
     return [image.to_dict() for image in images]
+
+@app.post("/galleries/{gallery_id}/share/")
+async def share_gallery(request: Request, gallery_id: str, email: str = Form(...)):
+    user_info = verify_user(request)
+    user_id = user_info['uid']
+    
+    user_query = db.collection('users').where('email', '==', email).stream()
+    recipient = next(user_query, None)
+    if not recipient:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User with the provided email does not exist")
+
+    recipient_id = recipient.id
+
+    gallery_ref = db.collection('galleries').document(gallery_id)
+    if not gallery_ref.get().exists:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gallery not found")
+
+    gallery_data = gallery_ref.get().to_dict()
+    db.collection('users').document(recipient_id).collection('shared_galleries').document(gallery_id).set(gallery_data)
+
+    return {"detail": "Gallery shared successfully"}
