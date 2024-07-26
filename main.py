@@ -131,3 +131,27 @@ async def upload_image(request: Request, file: UploadFile = File(...)):
         "hash": file_hash,
         "uploaded_at": firestore.SERVER_TIMESTAMP
     })
+
+async def delete_image(request: Request):
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse(content="Unauthorized", status_code=401)
+
+    data = await request.form()
+    gallery_id = data.get("gallery_id")
+    image_id = data.get("image_id")
+
+    if not gallery_id or not image_id:
+        return HTMLResponse(content="Gallery ID and Image ID are required", status_code=400)
+
+    # Delete the image from the gallery
+    gallery_img = db.collection("galleries").document(gallery_id)
+    images_gal = gallery_img.collection("images").document(image_id)
+    image_doc = images_gal.get()
+
+    if not image_doc.exists:
+        return HTMLResponse(content="Image not found", status_code=404)
+
+    images_gal.delete()
+
+    return HTMLResponse(content="Image deleted successfully", status_code=200)

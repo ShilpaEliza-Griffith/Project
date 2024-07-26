@@ -1,41 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gallery</title>
+    <style>
+        /* Basic styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px 0;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #c82333;
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .gallery-grid img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .gallery-grid img:hover {
+            transform: scale(1.05);
+        }
+        .image-item {
+            position: relative;
+        }
+        .delete-image-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #dc3545;
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            line-height: 30px;
+            cursor: pointer;
+        }
+        .delete-image-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
 <body>
-    <h1>Gallery</h1>
-    <div id="status">Checking login status...</div>
-    <a href="/galleries" class="button">Back to Galleries</a>
-    <form id="upload-form" onsubmit="uploadImage(event)">
-        <input type="hidden" id="gallery-id" value="{{ gallery_id }}">
-        <label for="image-file">Upload Image (JPG or PNG only):</label>
-        <input type="file" id="image-file" accept=".jpg,.jpeg,.png" required>
-        <button type="submit">Upload</button>
-    </form>
+    <div class="container">
+        <h1>Gallery: {{ gallery_name }}</h1>
+        <a href="/galleries" class="button">Back to Galleries</a>
 
-    <h2>Create New Gallery</h2>
-    <form id="create-gallery-form" onsubmit="createGallery(event)">
-        <label for="new-gallery-name">Gallery Name:</label>
-        <input type="text" id="new-gallery-name" required>
-        <button type="submit">Create Gallery</button>
-    </form>
+        <!-- Create Gallery Form -->
+        <h2>Create New Gallery</h2>
+        <form id="create-gallery-form" onsubmit="createGallery(event)">
+            <label for="new-gallery-name">Gallery Name:</label>
+            <input type="text" id="new-gallery-name" required>
+            <button class="button" type="submit">Create Gallery</button>
+        </form>
 
-    <h2>Upload New Image</h2>
-    <form id="upload-form" onsubmit="uploadImage(event)">
-        <input type="hidden" id="gallery-id" value="{{ gallery_id }}">
-        <label for="image-file">Upload Image (JPG or PNG only):</label>
-        <input type="file" id="image-file" accept=".jpg,.jpeg,.png" required>
-        <button type="submit">Upload</button>
-    </form>
+        <!-- Upload Image Form -->
+        <h2>Upload New Image</h2>
+        <form id="upload-form" onsubmit="uploadImage(event)">
+            <input type="hidden" id="gallery-id" value="{{ gallery_id }}">
+            <label for="image-file">Upload Image (JPG or PNG only):</label>
+            <input type="file" id="image-file" accept=".jpg,.jpeg,.png" required>
+            <button class="button" type="submit">Upload</button>
+        </form>
 
-    <h2>Share Gallery</h2>
-    <form id="share-gallery-form" onsubmit="shareGallery(event)">
-        <input type="hidden" id="gallery-id" value="{{ gallery_id }}">
-        <label for="share-email">Share with (email):</label>
-        <input type="email" id="share-email" required>
-        <button type="submit">Share</button>
-    </form>
-    
-    <div id="image-grid" class="gallery-grid">
-        <!-- Images will be loaded here dynamically -->
+        <!-- Share Gallery Form -->
+        <h2>Share Gallery</h2>
+        <form id="share-gallery-form" onsubmit="shareGallery(event)">
+            <input type="hidden" id="gallery-id" value="{{ gallery_id }}">
+            <label for="share-email">Share with (email):</label>
+            <input type="email" id="share-email" required>
+            <button class="button" type="submit">Share</button>
+        </form>
+
+        <!-- Images Grid -->
+        <h2>Images</h2>
+        <div class="gallery-grid">
+            {% if images %}
+                {% for image in images %}
+                    <div class="image-item" id="image-{{ image.id }}">
+                        <img src="{{ image.url }}" alt="Image">
+                        <button class="delete-image-button" onclick="deleteImage('{{ image.id }}')">X</button>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No images found.</p>
+            {% endif %}
+        </div>
     </div>
+
+    <script>
+        async function createGallery(event) {
+            event.preventDefault();
+            const name = document.getElementById("new-gallery-name").value;
+
+            const formData = new FormData();
+            formData.append('name', name);
+
+            try {
+                const response = await fetch('/create_gallery/', {
+                    method: 'POST',
+                    headers: {
+                        "Authorization": `Bearer ${document.cookie.split('=')[1]}`
+                    },
+                    body: formData
+                });
+                const result = await response.text();
+                alert(result);
+                if (result === "Gallery created successfully") {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function uploadImage(event) {
+            event.preventDefault();
+            const file = document.getElementById("image-file").files[0];
+            const galleryId = document.getElementById("gallery-id").value;
+
+            if (!file || !['image/jpeg', 'image/png'].includes(file.type)) {
+                alert('Please upload a JPG or PNG image.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('gallery_id', galleryId);
+
+            try {
+                const response = await fetch(`/upload_image/`, {
+                    method: 'POST',
+                    headers: {
+                        "Authorization": `Bearer ${document.cookie.split('=')[1]}`
+                    },
+                    body: formData
+                });
+                const result = await response.text();
+                alert(result);
+                if (!result.includes("Duplicate image detected")) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function deleteImage(imageId) {
+            const galleryId = document.getElementById("gallery-id").value;
+
+            const formData = new FormData();
+            formData.append('gallery_id', galleryId);
+            formData.append('image_id', imageId);
+
+            try {
+                const response = await fetch(`/delete_image/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        "Authorization": `Bearer ${document.cookie.split('=')[1]}`
+                    },
+                    body: new URLSearchParams(formData).toString()
+                });
+                const result = await response.text();
+                alert(result);
+                if (result === "Image deleted successfully") {
+                    document.getElementById(`image-${imageId}`).remove();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function shareGallery(event) {
+            event.preventDefault();
+            const galleryId = document.getElementById("gallery-id").value;
+            const email = document.getElementById("share-email").value;
+
+            const formData = new FormData();
+            formData.append('email', email);
+
+            try {
+                const response = await fetch(`/galleries/${galleryId}/share/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        "Authorization": `Bearer ${document.cookie.split('=')[1]}`
+                    },
+                    body: new URLSearchParams(formData).toString()
+                });
+                const result = await response.text();
+                alert(result);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    </script>
 </body>
 </html>
